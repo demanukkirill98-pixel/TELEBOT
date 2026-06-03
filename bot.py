@@ -13,20 +13,16 @@ db_config = {
 
 bot = telebot.TeleBot(TOKEN)
 
-# Хранилище состояний пользователей
 user_states = {}
 
 def update_admin_level(player_name, new_level):
-    """Обновляет уровень админа в БД"""
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
         
-        # Проверяем структуру таблицы
         cursor.execute("SHOW COLUMNS FROM account")
         columns = [col[0] for col in cursor.fetchall()]
         
-        # Определяем поле с именем
         if 'username' in columns:
             name_field = 'username'
         elif 'name' in columns:
@@ -36,7 +32,6 @@ def update_admin_level(player_name, new_level):
         else:
             return False, "Поле с именем не найдено"
         
-        # Определяем поле с админ-уровнем
         if 'admin' in columns:
             admin_field = 'admin'
         elif 'admin_level' in columns:
@@ -61,7 +56,6 @@ def update_admin_level(player_name, new_level):
             conn.close()
 
 def get_level_keyboard():
-    """Клавиатура с уровнями 1-13"""
     markup = InlineKeyboardMarkup(row_width=4)
     buttons = []
     for i in range(1, 14):
@@ -86,13 +80,11 @@ def ask_nickname(call):
 
 @bot.message_handler(func=lambda message: user_states.get(message.from_user.id) == "waiting_nick")
 def get_nickname(message):
-    # Сохраняем ник и переходим к запросу уровня
     user_states[message.from_user.id] = {"state": "waiting_level", "nick": message.text}
     
     bot.reply_to(
         message,
-        f"📛 Игрок: {message.text}\n\n"
-        f"🎖️ Теперь выберите уровень админки (1-13):",
+        f"📛 Игрок: {message.text}\n\n🎖️ Теперь выберите уровень админки (1-13):",
         reply_markup=get_level_keyboard()
     )
 
@@ -106,24 +98,14 @@ def set_level(call):
         return
     
     player_name = user_data["nick"]
-    
-    # Выдаём админку
     success, msg = update_admin_level(player_name, level)
-    
-    # Очищаем состояние
     user_states.pop(call.from_user.id, None)
     
-    # Отправляем результат
-    bot.edit_message_text(
-        msg,
-        call.message.chat.id,
-        call.message.message_id
-    )
+    bot.edit_message_text(msg, call.message.chat.id, call.message.message_id)
     
-    # Показываем кнопку для нового запроса
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🎖️ Выдать ещё", callback_data="give_admin"))
     bot.send_message(call.message.chat.id, "Хотите выдать ещё?", reply_markup=markup)
 
-print("✅ Бот запущен...")
+print("✅ Админ-бот запущен!")
 bot.polling()

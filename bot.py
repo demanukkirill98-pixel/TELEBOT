@@ -1,13 +1,26 @@
 import telebot
 
-TOKEN = "31a7d83f-000f-5000-b000-12dfae03c170"
-USERNAME = "@Mutriop"
-TEXT = "Привет сучара"
+# Замените на ваш реальный токен
+TOKEN = "8838879301:AAFw7eSCyU1UPQRxD0y-geppxpwDDWFgGIc"
 
+# Инициализация бота
 bot = telebot.TeleBot(TOKEN)
 
-try:
-    bot.send_message(USERNAME, TEXT)
-    print("✅ Сообщение отправлено")
-except Exception as e:
-    print(f"❌ Ошибка: {e}")
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "Привет! Я бот, и я отвечаю на команды.")
+
+# Обработчик команды /hello
+@bot.message_handler(commands=['hello'])
+def say_hello(message):
+    bot.reply_to(message, f"Привет, {message.from_user.first_name}!")
+
+# Обработчик текстовых сообщений
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, f"Вы написали: {message.text}")
+
+# Запуск бота
+print("✅ Бот успешно запущен и ожидает сообщения...")
+bot.polling()
